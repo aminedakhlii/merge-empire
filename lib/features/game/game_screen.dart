@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/theme.dart';
 import '../../core/config/game_config.dart';
+import '../../monetization/ads/banner_ad_slot.dart';
 import '../board/board_widget.dart';
 import '../daily_challenges/daily_screen.dart';
 import '../economy/sell_controls.dart';
@@ -89,6 +90,8 @@ class GameScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     const SellControls(),
+                    const SizedBox(height: 6),
+                    const _OptionalRewardedRow(),
                     if (ctrl.statusMessage != null) ...[
                       const SizedBox(height: 6),
                       AnimatedSwitcher(
@@ -105,7 +108,9 @@ class GameScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
+                    // Banner reserved below controls — never overlays the board.
+                    const BannerAdSlot(),
                   ],
                 ),
               ),
@@ -114,6 +119,33 @@ class GameScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _OptionalRewardedRow extends ConsumerWidget {
+  const _OptionalRewardedRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(gameControllerProvider.notifier);
+    final canOffer = notifier.canOfferRewarded();
+    final bonus = notifier.rewardedBonusCoins;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            canOffer
+                ? 'Optional: watch a rewarded ad for +$bonus coins'
+                : 'Rewarded bonus unavailable right now',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        OutlinedButton(
+          onPressed: canOffer ? () => notifier.watchRewardedBonus() : null,
+          child: const Text('Bonus'),
+        ),
+      ],
     );
   }
 }

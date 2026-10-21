@@ -10,6 +10,7 @@ import '../../core/models/generator_state.dart';
 import '../../core/models/mission_progress.dart';
 import '../../core/models/order_instance.dart';
 import '../../core/models/player_stats.dart';
+import '../../monetization/ads/frequency_controller.dart';
 import '../progression/progression_logic.dart';
 
 /// Result of a board action. Failed merges/moves leave state unchanged.
@@ -59,7 +60,7 @@ class GameLogic {
     final now = nowMs ?? _clockMs();
     final nowDt = _nowDate(nowMs: now);
     var state = GameState(
-      schemaVersion: 2,
+      schemaVersion: 3,
       columns: config.board.columns,
       rows: config.board.rows,
       objects: const {},
@@ -564,4 +565,76 @@ class GameLogic {
 
   bool pastryUnlocked(GameState state) =>
       state.shopLevel >= config.pastryUnlockShopLevel;
+
+  /// Record an interstitial-eligible gameplay milestone (order/shop/mission).
+  GameState bumpAdMilestone(GameState state) {
+    final counters = state.adCounters.copyWith(
+      milestonesSinceInterstitial:
+          state.adCounters.milestonesSinceInterstitial + 1,
+    );
+    return state.copyWith(adCounters: counters);
+  }
+
+  GameState beginRewardedClaim(GameState state, String claimId) {
+    return state.copyWith(
+      adCounters: state.adCounters.copyWith(pendingRewardedClaimId: claimId),
+    );
+  }
+
+  /// Grants coins only when [claimId] matches pending and was not claimed before.
+  ActionResult grantRewardedBonus(
+    GameState state,
+    String claimId, {
+    int? nowMs,
+  }) {
+    final now = nowMs ?? _clockMs();
+    if (claimId.isEmpty) {
+      return const ActionFailure('Invalid reward claim');
+    }
+    if (claimId == state.adCounters.lastRewardedClaimId) {
+      return const ActionFailure('Reward already claimed');
+    }
+    if (claimId != state.adCounters.pendingRewardedClaimId) {
+      return const ActionFailure('No pending reward for this session');
+    }
+
+    final bonus = config.ads.rewardedCoinBonus;
+    final freq = AdFrequencyController(config.ads);
+    var counters = freq.rollDay(
+      state.adCounters,
+      DateTime.fromMillisecondsSinceEpoch(now),
+    );
+    counters = freq.rollHour(counters, now);
+    final claimed = freq.claimRewarded(counters, claimId, now);
+    if (claimed == null) {
+      return const ActionFailure('Reward already claimed');
+    }
+
+    return ActionSuccess(
+      state.copyWith(
+        coins: state.coins + bonus,
+        adCounters: claimed,
+        updatedAtMs: now,
+        stats: state.stats.copyWith(
+          coinsEarnedLifetime: state.stats.coinsEarnedLifetime + bonus,
+        ),
+      ),
+      message: 'Rewarded bonus: +$bonus coins',
+    );
+  }
+
+  GameState clearPendingRewarded(GameState state) => state.copyWith(
+        adCounters: state.adCounters.copyWith(pendingRewardedClaimId: ''),
+      );
+
+  GameState recordInterstitialShown(GameState state, {int? nowMs}) {
+    final now = nowMs ?? _clockMs();
+    final freq = AdFrequencyController(config.ads);
+    var counters = freq.rollDay(
+      state.adCounters,
+      DateTime.fromMillisecondsSinceEpoch(now),
+    );
+    counters = freq.recordInterstitialShown(counters, now);
+    return state.copyWith(adCounters: counters);
+  }
 }

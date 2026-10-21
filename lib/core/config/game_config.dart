@@ -1,4 +1,5 @@
 import 'achievements_config.dart';
+import 'ads_config.dart';
 import 'board_config.dart';
 import 'chain_config.dart';
 import 'daily_config.dart';
@@ -6,6 +7,7 @@ import 'economy_config.dart';
 import 'generator_config.dart';
 import 'missions_config.dart';
 import 'orders_config.dart';
+import 'purchases_config.dart';
 import 'shop_config.dart';
 import 'tutorial_config.dart';
 import 'xp_config.dart';
@@ -25,6 +27,8 @@ class GameConfig {
     this.achievements = AchievementsConfig.standard,
     this.daily = DailyConfig.standard,
     this.tutorial = TutorialConfig.standard,
+    this.ads = AdsConfig.standard,
+    this.purchases = PurchasesConfig.standard,
     this.pastryUnlockShopLevel = 6,
   })  : coffeeChain = coffeeChain ?? ChainConfig.coffee,
         pastryChain = pastryChain ?? ChainConfig.pastry,
@@ -43,6 +47,8 @@ class GameConfig {
   final AchievementsConfig achievements;
   final DailyConfig daily;
   final TutorialConfig tutorial;
+  final AdsConfig ads;
+  final PurchasesConfig purchases;
   final int pastryUnlockShopLevel;
 
   ChainConfig chainById(String id) {

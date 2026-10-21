@@ -25,9 +25,10 @@ void main() {
       expect(loaded.occupiedCount, state.occupiedCount);
       expect(loaded.objects.values.first.level, 1);
       expect(loaded.generators.first.storedOutput, 0);
-      expect(loaded.schemaVersion, 2);
+      expect(loaded.schemaVersion, 3);
       expect(loaded.missions, isNotEmpty);
       expect(loaded.orders.length, 3);
+      expect(loaded.adCounters, isNotNull);
     });
   });
 
@@ -80,7 +81,7 @@ void main() {
       expect(resumed.rows, 9);
     });
 
-    test('migrate upgrades schema 0 through 2', () {
+    test('migrate upgrades schema 0 through 3', () {
       final save = SharedPreferencesSaveService();
       final migrated = save.migrate({
         'schemaVersion': 0,
@@ -90,11 +91,13 @@ void main() {
         'objects': <dynamic>[],
         'generators': <dynamic>[],
       });
-      expect(migrated['schemaVersion'], 2);
+      expect(migrated['schemaVersion'], 3);
       expect(migrated['gems'], 0);
       expect(migrated['nextObjectSeq'], 1);
       expect(migrated['playerLevel'], 1);
       expect(migrated['shopLevel'], 1);
+      expect(migrated['adCounters'], isNotNull);
+      expect(migrated['removeAdsEntitlement'], false);
     });
 
     test('malformed save returns null', () async {
