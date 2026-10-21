@@ -79,9 +79,11 @@ class ProgressionLogic {
   }
 
   List<OrderInstance> seedOrders(GameState state, {required int startSeq}) {
+    // Attainable = unlocked by current shop merge cap (not only items already made).
+    final shopCap = config.shop.levelDef(state.shopLevel).unlockMaxObjectLevel;
     final attainable = config.orders.attainable(
       shopLevel: state.shopLevel,
-      maxObjectLevelSeen: state.stats.maxObjectLevelSeen,
+      maxObjectLevelSeen: shopCap,
     );
     if (attainable.isEmpty) return const [];
 

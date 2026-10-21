@@ -337,9 +337,10 @@ class GameLogic {
 
     final orders = List.of(state.orders)..removeAt(index);
 
+    final shopCap = config.shop.levelDef(state.shopLevel).unlockMaxObjectLevel;
     final attainable = config.orders.attainable(
       shopLevel: state.shopLevel,
-      maxObjectLevelSeen: state.stats.maxObjectLevelSeen,
+      maxObjectLevelSeen: shopCap,
     );
     var nextSeq = state.nextOrderSeq;
     if (attainable.isNotEmpty) {
