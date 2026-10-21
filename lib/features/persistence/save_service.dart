@@ -17,7 +17,7 @@ class SharedPreferencesSaveService implements SaveService {
     this.storageKey = 'merge_empire_save_v1',
   }) : _prefs = prefs;
 
-  static const int currentSchemaVersion = 1;
+  static const int currentSchemaVersion = 2;
 
   final String storageKey;
   SharedPreferences? _prefs;
@@ -37,7 +37,6 @@ class SharedPreferencesSaveService implements SaveService {
       final migrated = migrate(json);
       return GameState.fromJson(migrated);
     } on Object {
-      // Malformed save: treat as missing rather than crash.
       return null;
     }
   }
@@ -63,7 +62,6 @@ class SharedPreferencesSaveService implements SaveService {
     while (version < currentSchemaVersion) {
       switch (version) {
         case 0:
-          // Pre-versioned / missing → v1: ensure required keys.
           data = {
             'schemaVersion': 1,
             'columns': data['columns'] ?? 7,
@@ -77,6 +75,44 @@ class SharedPreferencesSaveService implements SaveService {
             'objects': data['objects'] ?? <dynamic>[],
           };
           version = 1;
+        case 1:
+          // Phase 1 → Phase 2 progression fields.
+          data = {
+            ...data,
+            'schemaVersion': 2,
+            'playerXp': data['playerXp'] ?? 0,
+            'playerLevel': data['playerLevel'] ?? 1,
+            'shopLevel': data['shopLevel'] ?? 1,
+            'nextOrderSeq': data['nextOrderSeq'] ?? 1,
+            'orders': data['orders'] ?? <dynamic>[],
+            'missions': data['missions'] ?? <dynamic>[],
+            'achievements': data['achievements'] ?? <dynamic>[],
+            'daily': data['daily'] ??
+                {
+                  'dayKey': '',
+                  'challengeId': '',
+                  'progress': 0,
+                  'target': 1,
+                  'claimed': false,
+                  'activityStreak': 0,
+                  'uniqueActiveDays': 0,
+                },
+            'stats': data['stats'] ??
+                {
+                  'mergeCount': 0,
+                  'ordersCompleted': 0,
+                  'coinsEarnedLifetime': 0,
+                  'collectCount': 0,
+                  'shopUpgrades': 0,
+                  'maxObjectLevelSeen': 1,
+                  'lastSeenDayKey': '',
+                },
+            'tutorialStep': data['tutorialStep'] ?? 'welcome',
+            'tutorialCompleted': data['tutorialCompleted'] ?? false,
+            'soundEnabled': data['soundEnabled'] ?? true,
+            'hapticsEnabled': data['hapticsEnabled'] ?? true,
+          };
+          version = 2;
         default:
           throw StateError('No migration from schema $version');
       }

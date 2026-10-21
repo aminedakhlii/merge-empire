@@ -11,14 +11,71 @@ class GeneratorPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ctrl = ref.watch(gameControllerProvider);
+    final logic = ref.read(gameControllerProvider.notifier).logic;
     final gens = ctrl.game.generators;
-    final gen = gens.where((g) => g.configId == GeneratorConfig.basicCoffeeId);
-    final stored = gen.isEmpty ? 0 : gen.first.storedOutput;
-    final max = GeneratorConfig.basicCoffee.maxStoredOutput;
+    final coffee =
+        gens.where((g) => g.configId == GeneratorConfig.basicCoffeeId);
+    final pastry = gens.where((g) => g.configId == GeneratorConfig.pastryOvenId);
+    final stored = coffee.isEmpty ? 0 : coffee.first.storedOutput;
+    final max = logic.generatorCapacity(ctrl.game);
     final ready = stored > 0 && !ctrl.game.isFull;
+    final pastryStored = pastry.isEmpty ? 0 : pastry.first.storedOutput;
+    final pastryReady =
+        pastry.isNotEmpty && pastryStored > 0 && !ctrl.game.isFull;
 
+    return Column(
+      children: [
+        _GeneratorRow(
+          title: GeneratorConfig.basicCoffee.displayName,
+          icon: Icons.coffee_maker,
+          readyLabel: 'Ready: $stored / $max',
+          enabled: ready,
+          onGenerate: () => ref
+              .read(gameControllerProvider.notifier)
+              .collectFromGenerator(),
+        ),
+        if (pastry.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _GeneratorRow(
+            title: GeneratorConfig.pastryOven.displayName,
+            icon: Icons.bakery_dining,
+            readyLabel:
+                'Ready: $pastryStored / ${GeneratorConfig.pastryOven.maxStoredOutput}',
+            enabled: pastryReady,
+            buttonLabel: 'Bake',
+            onGenerate: () => ref
+                .read(gameControllerProvider.notifier)
+                .collectFromGenerator(
+                  generatorId: GeneratorConfig.pastryOvenId,
+                ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _GeneratorRow extends StatelessWidget {
+  const _GeneratorRow({
+    required this.title,
+    required this.icon,
+    required this.readyLabel,
+    required this.enabled,
+    required this.onGenerate,
+    this.buttonLabel = 'Generate',
+  });
+
+  final String title;
+  final IconData icon;
+  final String readyLabel;
+  final bool enabled;
+  final VoidCallback onGenerate;
+  final String buttonLabel;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -31,39 +88,32 @@ class GeneratorPanel extends ConsumerWidget {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: MergeEmpireTheme.roast,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.coffee_maker, color: Colors.white),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  GeneratorConfig.basicCoffee.displayName,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                 ),
-                Text(
-                  'Ready: $stored / $max',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                Text(readyLabel, style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
           FilledButton(
-            onPressed: ready
-                ? () => ref
-                    .read(gameControllerProvider.notifier)
-                    .collectFromGenerator()
-                : null,
-            child: const Text('Generate'),
+            onPressed: enabled ? onGenerate : null,
+            child: Text(buttonLabel),
           ),
         ],
       ),

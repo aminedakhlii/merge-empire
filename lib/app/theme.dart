@@ -41,7 +41,23 @@ abstract final class MergeEmpireTheme {
   }
 
   /// Ordered level hues (also labeled with level number / name in UI).
-  static Color levelColor(int level) {
+  static Color levelColor(int level, {String chainId = 'coffee'}) {
+    if (chainId == 'pastry') {
+      const pastry = <Color>[
+        Color(0xFFE8D5B7),
+        Color(0xFFD4A574),
+        Color(0xFFC4894A),
+        Color(0xFFB56B3A),
+        Color(0xFFA0522D),
+        Color(0xFF8B4513),
+        Color(0xFFCD853F),
+        Color(0xFFDEB887),
+        Color(0xFFD2691E),
+        Color(0xFF5C3A21),
+      ];
+      if (level < 1 || level > pastry.length) return caramel;
+      return pastry[level - 1];
+    }
     const palette = <Color>[
       Color(0xFF8B5E3C),
       Color(0xFF9A6B45),

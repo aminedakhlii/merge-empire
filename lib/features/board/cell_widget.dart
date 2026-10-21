@@ -77,7 +77,10 @@ class _DraggableObject extends StatelessWidget {
   Widget build(BuildContext context) {
     final chain = ChainConfig.byId(object.chainId);
     final def = chain.levelDef(object.level);
-    final color = MergeEmpireTheme.levelColor(object.level);
+    final color = MergeEmpireTheme.levelColor(
+      object.level,
+      chainId: object.chainId,
+    );
 
     final child = _ObjectTile(
       label: def.shortLabel,

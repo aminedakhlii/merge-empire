@@ -19,6 +19,7 @@ class GeneratorConfig {
   final int upgradeLevel;
 
   static const String basicCoffeeId = 'basic_coffee_generator';
+  static const String pastryOvenId = 'pastry_oven';
 
   static const GeneratorConfig basicCoffee = GeneratorConfig(
     id: basicCoffeeId,
@@ -27,5 +28,14 @@ class GeneratorConfig {
     producedLevel: 1,
     productionIntervalMs: 3000,
     maxStoredOutput: 5,
+  );
+
+  static const GeneratorConfig pastryOven = GeneratorConfig(
+    id: pastryOvenId,
+    displayName: 'Pastry Oven',
+    chainId: 'pastry',
+    producedLevel: 1,
+    productionIntervalMs: 4000,
+    maxStoredOutput: 4,
   );
 }
