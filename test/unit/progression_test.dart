@@ -27,9 +27,15 @@ void main() {
     test('seeds three attainable orders', () {
       final state = logic.createInitialState(nowMs: clock);
       expect(state.orders.length, 3);
+      final shopCap =
+          logic.config.shop.levelDef(state.shopLevel).unlockMaxObjectLevel;
+      final levels = <int>{};
       for (final o in state.orders) {
-        expect(o.requiredLevel, lessThanOrEqualTo(state.stats.maxObjectLevelSeen));
+        expect(o.requiredLevel, lessThanOrEqualTo(shopCap));
+        levels.add(o.requiredLevel);
       }
+      // Shop L1 unlocks up to L3 → early slots should not all be identical L1.
+      expect(levels.length, greaterThan(1));
     });
 
     test('complete order consumes items and grants rewards once', () {
