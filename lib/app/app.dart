@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../features/game/game_screen.dart';
+import '../features/splash/splash_screen.dart';
 import 'theme.dart';
 
 class MergeEmpireApp extends StatelessWidget {
@@ -12,7 +12,7 @@ class MergeEmpireApp extends StatelessWidget {
       title: 'Merge Empire',
       debugShowCheckedModeBanner: false,
       theme: MergeEmpireTheme.light(),
-      home: const GameScreen(),
+      home: const SplashScreen(),
     );
   }
 }
