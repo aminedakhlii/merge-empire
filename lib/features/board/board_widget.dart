@@ -49,17 +49,20 @@ class MergeBoard extends ConsumerWidget {
                                     object != null &&
                                     selected != pos &&
                                     selectedObject.canMergeWith(object);
+                                final notifier =
+                                    ref.read(gameControllerProvider.notifier);
                                 return BoardCell(
                                   position: pos,
                                   object: object,
                                   selected: selected == pos,
                                   mergeHint: mergeHint,
-                                  onTap: () => ref
-                                      .read(gameControllerProvider.notifier)
-                                      .selectCell(pos),
-                                  onAcceptDrop: (from) => ref
-                                      .read(gameControllerProvider.notifier)
-                                      .moveOrMerge(from, pos),
+                                  onTap: () => notifier.selectCell(pos),
+                                  onAcceptDrop: (from) =>
+                                      notifier.moveOrMerge(from, pos),
+                                  onDragStarted: () =>
+                                      notifier.setBoardInteracting(true),
+                                  onDragEnd: () =>
+                                      notifier.setBoardInteracting(false),
                                 );
                               },
                             ),

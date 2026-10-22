@@ -14,6 +14,8 @@ class BoardCell extends StatelessWidget {
     required this.mergeHint,
     required this.onTap,
     required this.onAcceptDrop,
+    this.onDragStarted,
+    this.onDragEnd,
   });
 
   final BoardPosition position;
@@ -22,6 +24,8 @@ class BoardCell extends StatelessWidget {
   final bool mergeHint;
   final VoidCallback onTap;
   final void Function(BoardPosition from) onAcceptDrop;
+  final VoidCallback? onDragStarted;
+  final VoidCallback? onDragEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +58,8 @@ class BoardCell extends StatelessWidget {
                     position: position,
                     object: object!,
                     selected: selected,
+                    onDragStarted: onDragStarted,
+                    onDragEnd: onDragEnd,
                   ),
           ),
         );
@@ -67,11 +73,15 @@ class _DraggableObject extends StatelessWidget {
     required this.position,
     required this.object,
     required this.selected,
+    this.onDragStarted,
+    this.onDragEnd,
   });
 
   final BoardPosition position;
   final GameObject object;
   final bool selected;
+  final VoidCallback? onDragStarted;
+  final VoidCallback? onDragEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +101,8 @@ class _DraggableObject extends StatelessWidget {
 
     return Draggable<BoardPosition>(
       data: position,
+      onDragStarted: onDragStarted,
+      onDragEnd: (_) => onDragEnd?.call(),
       feedback: Material(
         color: Colors.transparent,
         child: SizedBox(

@@ -17,7 +17,7 @@ class SharedPreferencesSaveService implements SaveService {
     this.storageKey = 'merge_empire_save_v1',
   }) : _prefs = prefs;
 
-  static const int currentSchemaVersion = 2;
+  static const int currentSchemaVersion = 3;
 
   final String storageKey;
   SharedPreferences? _prefs;
@@ -113,6 +113,26 @@ class SharedPreferencesSaveService implements SaveService {
             'hapticsEnabled': data['hapticsEnabled'] ?? true,
           };
           version = 2;
+        case 2:
+          data = {
+            ...data,
+            'schemaVersion': 3,
+            'removeAdsEntitlement': data['removeAdsEntitlement'] ?? false,
+            'adCounters': data['adCounters'] ??
+                {
+                  'interstitialShownToday': 0,
+                  'interstitialDayKey': '',
+                  'lastInterstitialAtMs': 0,
+                  'milestonesSinceInterstitial': 0,
+                  'rewardedShownToday': 0,
+                  'rewardedDayKey': '',
+                  'rewardedHourWindowStartMs': 0,
+                  'rewardedShownThisHour': 0,
+                  'lastRewardedClaimId': '',
+                  'pendingRewardedClaimId': '',
+                },
+          };
+          version = 3;
         default:
           throw StateError('No migration from schema $version');
       }

@@ -1,5 +1,6 @@
 import '../config/tutorial_config.dart';
 import 'achievement_progress.dart';
+import 'ad_counters.dart';
 import 'board_position.dart';
 import 'daily_challenge_state.dart';
 import 'game_object.dart';
@@ -8,7 +9,7 @@ import 'mission_progress.dart';
 import 'order_instance.dart';
 import 'player_stats.dart';
 
-/// Full persistent game snapshot (schema v2 = Phase 2 progression).
+/// Full persistent game snapshot (schema v3 = Phase 3 monetization counters).
 class GameState {
   const GameState({
     required this.schemaVersion,
@@ -33,6 +34,8 @@ class GameState {
     required this.tutorialCompleted,
     this.soundEnabled = true,
     this.hapticsEnabled = true,
+    this.adCounters = const AdCounters(),
+    this.removeAdsEntitlement = false,
   });
 
   final int schemaVersion;
@@ -58,6 +61,8 @@ class GameState {
   final bool tutorialCompleted;
   final bool soundEnabled;
   final bool hapticsEnabled;
+  final AdCounters adCounters;
+  final bool removeAdsEntitlement;
 
   int get occupiedCount => objects.length;
 
@@ -116,6 +121,8 @@ class GameState {
     bool? tutorialCompleted,
     bool? soundEnabled,
     bool? hapticsEnabled,
+    AdCounters? adCounters,
+    bool? removeAdsEntitlement,
   }) =>
       GameState(
         schemaVersion: schemaVersion ?? this.schemaVersion,
@@ -140,6 +147,9 @@ class GameState {
         tutorialCompleted: tutorialCompleted ?? this.tutorialCompleted,
         soundEnabled: soundEnabled ?? this.soundEnabled,
         hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+        adCounters: adCounters ?? this.adCounters,
+        removeAdsEntitlement:
+            removeAdsEntitlement ?? this.removeAdsEntitlement,
       );
 
   Map<String, dynamic> toJson() => {
@@ -158,6 +168,8 @@ class GameState {
         'tutorialCompleted': tutorialCompleted,
         'soundEnabled': soundEnabled,
         'hapticsEnabled': hapticsEnabled,
+        'removeAdsEntitlement': removeAdsEntitlement,
+        'adCounters': adCounters.toJson(),
         'generators': generators.map((g) => g.toJson()).toList(),
         'orders': orders.map((o) => o.toJson()).toList(),
         'missions': missions.map((m) => m.toJson()).toList(),
@@ -207,6 +219,10 @@ class GameState {
       tutorialCompleted: json['tutorialCompleted'] as bool? ?? false,
       soundEnabled: json['soundEnabled'] as bool? ?? true,
       hapticsEnabled: json['hapticsEnabled'] as bool? ?? true,
+      removeAdsEntitlement: json['removeAdsEntitlement'] as bool? ?? false,
+      adCounters: json['adCounters'] != null
+          ? AdCounters.fromJson(json['adCounters'] as Map<String, dynamic>)
+          : const AdCounters(),
       generators: (json['generators'] as List<dynamic>? ?? [])
           .map((g) => GeneratorState.fromJson(g as Map<String, dynamic>))
           .toList(),

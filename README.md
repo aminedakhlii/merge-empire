@@ -7,14 +7,14 @@ Offline-capable Flutter merge game: grow a neighborhood coffee shop by merging p
 | Phase | Scope | Status |
 |-------|--------|--------|
 | 1 | Board, merge, generator, coins, sell, save | Done |
-| 2 | Orders, shop, XP, missions, daily, achievements, tutorial, polish | **This branch** |
-| 3 | AdMob, consent, analytics | Deferred |
+| 2 | Orders, shop, XP, missions, daily, achievements, tutorial | Done |
+| 3 | AdMob, consent, analytics, Remove Ads flag | **This branch** |
 | 4 | Release polish, privacy docs, store assets | Deferred |
 
 ## Requirements
 
 - Flutter SDK **3.35+** (Dart 3.9+)
-- iOS / Android / Chrome / Linux toolchain for device runs
+- iOS / Android for AdMob (web/desktop use no-op ads)
 
 ## Run
 
@@ -23,37 +23,24 @@ flutter pub get
 flutter run
 ```
 
-Portrait is preferred. First launch walks through a short tutorial (Generate → Merge → Sell/Order). Progress auto-saves locally.
+Ads use **Google test unit IDs only**. See `docs/admob-setup.md`.
 
 ## Test
 
 ```bash
-flutter test
 flutter analyze
+flutter test
 ```
 
-## Project layout
+## Monetization notes
 
-```
-lib/
-  app/                 # MaterialApp + theme
-  core/                # config + models
-  features/
-    board/             # merge board
-    daily_challenges/  # daily UI
-    economy/           # sell UI
-    game/              # logic, controller, main screen
-    generators/        # coffee (+ pastry when unlocked)
-    missions/          # missions + achievements
-    orders/            # customer orders
-    persistence/       # versioned SharedPreferences save (schema v2)
-    progression/       # XP / orders / daily / tutorial helpers
-    settings/          # sound/haptics toggles
-    shop/              # ≥10 shop levels
-    tutorial/          # first-minute overlay
-docs/
-  daily-challenges-offline.md   # clock safeguards + limitations
-```
+- Ads live behind `AdService` (`lib/monetization/ads/`) — not in gameplay widgets
+- Banner slot is reserved below controls (never overlays the board)
+- Rewarded is optional; rewards only after SDK callback; claim-once
+- Interstitials respect frequency caps and never show during board drag
+- Consent / privacy options entry in Settings (UMP/ATT hooks ready)
+- Analytics via `AnalyticsService` abstraction (logging/no-op until Firebase is wired)
+- Remove Ads IAP is feature-flagged off with a service interface
 
 No production AdMob IDs. No backend.
 
