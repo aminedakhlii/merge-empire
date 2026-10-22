@@ -31,6 +31,20 @@ flutter analyze
 flutter test
 ```
 
+## iOS pods (`google_mobile_ads` / webview)
+
+This project disables Swift Package Manager and uses CocoaPods so
+`google_mobile_ads` can resolve its Flutter-plugin dependency
+`webview_flutter_wkwebview` (not on the CocoaPods CDN). See
+[`docs/ios-cocoapods.md`](ios-cocoapods.md).
+
+```bash
+flutter pub get
+cd ios && pod install && cd ..
+```
+
+Prefer `flutter run` / `flutter build ios` if you do not need a manual `pod install`.
+
 ## iOS release build
 
 ```bash

@@ -20,6 +20,8 @@ flutter analyze
 flutter test
 ```
 
+iOS (after `flutter pub get`): `cd ios && pod install` — see [`docs/ios-cocoapods.md`](docs/ios-cocoapods.md) if you hit `webview_flutter_wkwebview` CocoaPods errors.
+
 Full instructions: [`docs/build-and-run.md`](docs/build-and-run.md)  
 AdMob: [`docs/admob-setup.md`](docs/admob-setup.md)  
 Release: [`docs/release-checklist.md`](docs/release-checklist.md)  
