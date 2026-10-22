@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/models/game_state.dart';
 
-/// Versioned local save/load. Schema migrations go here as versions grow.
+/// Versioned local save/load with backup + validation for crash recovery.
 abstract class SaveService {
   Future<GameState?> load();
   Future<void> save(GameState state);
@@ -15,11 +15,13 @@ class SharedPreferencesSaveService implements SaveService {
   SharedPreferencesSaveService({
     SharedPreferences? prefs,
     this.storageKey = 'merge_empire_save_v1',
+    this.backupKey = 'merge_empire_save_backup_v1',
   }) : _prefs = prefs;
 
   static const int currentSchemaVersion = 3;
 
   final String storageKey;
+  final String backupKey;
   SharedPreferences? _prefs;
 
   Future<SharedPreferences> _ensurePrefs() async {
@@ -29,29 +31,79 @@ class SharedPreferencesSaveService implements SaveService {
   @override
   Future<GameState?> load() async {
     final prefs = await _ensurePrefs();
-    final raw = prefs.getString(storageKey);
-    if (raw == null || raw.isEmpty) return null;
 
+    final primary = _decode(prefs.getString(storageKey));
+    if (primary != null) return primary;
+
+    // Crash / corruption: fall back to last known good backup.
+    final backup = _decode(prefs.getString(backupKey));
+    if (backup != null) {
+      // Promote backup so the next launch has a healthy primary.
+      await prefs.setString(storageKey, jsonEncode(backup.toJson()));
+      return backup;
+    }
+    return null;
+  }
+
+  GameState? _decode(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
     try {
       final json = jsonDecode(raw) as Map<String, dynamic>;
+      if (!looksLikeSave(json)) return null;
       final migrated = migrate(json);
-      return GameState.fromJson(migrated);
+      final state = GameState.fromJson(migrated);
+      return validateState(state) ? state : null;
     } on Object {
       return null;
     }
   }
 
+  /// Structural sanity checks before trusting persisted JSON.
+  static bool looksLikeSave(Map<String, dynamic> json) {
+    return json.containsKey('schemaVersion') ||
+        (json.containsKey('columns') && json.containsKey('rows'));
+  }
+
+  /// Reject obviously inconsistent states (negative currency, bad board size).
+  static bool validateState(GameState state) {
+    if (state.columns < 1 || state.rows < 1) return false;
+    if (state.coins < 0 || state.gems < 0) return false;
+    if (state.playerLevel < 1 || state.shopLevel < 1) return false;
+    if (state.nextObjectSeq < 1) return false;
+    for (final pos in state.objects.keys) {
+      if (pos.column < 0 ||
+          pos.row < 0 ||
+          pos.column >= state.columns ||
+          pos.row >= state.rows) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @override
   Future<void> save(GameState state) async {
+    if (!validateState(state)) {
+      throw StateError('Refusing to persist invalid GameState');
+    }
     final prefs = await _ensurePrefs();
     final payload = state.copyWith(schemaVersion: currentSchemaVersion);
-    await prefs.setString(storageKey, jsonEncode(payload.toJson()));
+    final encoded = jsonEncode(payload.toJson());
+
+    // Write backup of previous primary first (if any), then primary.
+    // SharedPreferences commits are per-key; dual keys limit loss on crash.
+    final previous = prefs.getString(storageKey);
+    if (previous != null && previous.isNotEmpty && previous != encoded) {
+      await prefs.setString(backupKey, previous);
+    }
+    await prefs.setString(storageKey, encoded);
   }
 
   @override
   Future<void> clear() async {
     final prefs = await _ensurePrefs();
     await prefs.remove(storageKey);
+    await prefs.remove(backupKey);
   }
 
   /// Apply sequential migrations from [json]'s schemaVersion to current.
@@ -76,7 +128,6 @@ class SharedPreferencesSaveService implements SaveService {
           };
           version = 1;
         case 1:
-          // Phase 1 → Phase 2 progression fields.
           data = {
             ...data,
             'schemaVersion': 2,
@@ -141,20 +192,43 @@ class SharedPreferencesSaveService implements SaveService {
   }
 }
 
-/// In-memory save for unit tests.
+/// In-memory save for unit tests (supports optional backup for recovery tests).
 class InMemorySaveService implements SaveService {
   GameState? _state;
+  GameState? _backup;
+
+  GameState? get backup => _backup;
 
   @override
-  Future<GameState?> load() async => _state;
+  Future<GameState?> load() async {
+    if (_state != null && SharedPreferencesSaveService.validateState(_state!)) {
+      return _state;
+    }
+    if (_backup != null &&
+        SharedPreferencesSaveService.validateState(_backup!)) {
+      _state = _backup;
+      return _backup;
+    }
+    return null;
+  }
 
   @override
   Future<void> save(GameState state) async {
+    if (!SharedPreferencesSaveService.validateState(state)) {
+      throw StateError('Refusing to persist invalid GameState');
+    }
+    if (_state != null) _backup = _state;
     _state = state;
+  }
+
+  /// Test helper: corrupt primary while leaving backup intact.
+  void corruptPrimaryKeepBackup() {
+    _state = null;
   }
 
   @override
   Future<void> clear() async {
     _state = null;
+    _backup = null;
   }
 }

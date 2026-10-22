@@ -1,4 +1,4 @@
-# AdMob setup (Phase 3)
+# AdMob setup (Phases 3–4)
 
 ## Development
 
@@ -15,10 +15,13 @@ Platform manifests:
 
 ## Production (owner-supplied)
 
-1. Create AdMob apps + ad units.
-2. Set `AdsConfig.environment = AdsEnvironment.production`.
-3. Fill `AdUnitIds.productionUnconfigured` (or a future override) with **real** unit IDs.
-4. If production IDs are empty, the app refuses to pretend it has them and keeps test units / no-op behavior.
+Use `lib/core/config/production_config.dart` as the single owner checklist for IDs and legal URLs.
+
+1. Create AdMob apps + ad units in the owner AdMob account.
+2. Fill `ProductionConfig.adMob` / `AdsConfig.productionUnits` with **real** unit IDs.
+3. Update Android/iOS manifests to the production **app** ID.
+4. Set `AdsEnvironment.production` only after IDs are real.
+5. If production IDs are empty, the app refuses to invent them and keeps test units / no-op behavior.
 
 **Do not invent production AdMob IDs.**
 
@@ -32,3 +35,9 @@ Platform manifests:
 ## Failure behavior
 
 Ads initialize and load asynchronously. Failures never block generate/merge/sell/save. Offline play is unaffected.
+
+## Related
+
+- `docs/build-and-run.md` — iOS/Android release builds  
+- `docs/owner-inputs.md` — accounts and identifiers still needed  
+- `docs/release-checklist.md` — pre-submit gates
