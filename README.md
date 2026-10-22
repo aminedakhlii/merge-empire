@@ -1,13 +1,20 @@
 # Merge Empire
 
-Offline-capable Flutter merge game: grow a neighborhood coffee shop by merging coffee products, selling them for coins, and expanding your empire.
+Offline-capable Flutter merge game: grow a neighborhood coffee shop by merging products, fulfilling orders, upgrading the shop, and expanding your empire.
 
-**Phase 1** delivers the playable foundation: configurable 7×9 merge board, coffee chain (10 levels), generator, coin economy, selling, and versioned local save/resume.
+## Phase status
+
+| Phase | Scope | Status |
+|-------|--------|--------|
+| 1 | Board, merge, generator, coins, sell, save | Done |
+| 2 | Orders, shop, XP, missions, daily, achievements, tutorial, polish | **This branch** |
+| 3 | AdMob, consent, analytics | Deferred |
+| 4 | Release polish, privacy docs, store assets | Deferred |
 
 ## Requirements
 
 - Flutter SDK **3.35+** (Dart 3.9+)
-- iOS and/or Android toolchain for device/simulator runs
+- iOS / Android / Chrome / Linux toolchain for device runs
 
 ## Run
 
@@ -16,42 +23,39 @@ flutter pub get
 flutter run
 ```
 
-Portrait is preferred. On first launch you get one ready coffee bean in the generator — tap **Generate**, drag matching items together to merge, select an item and tap **Sell** to earn coins. Progress auto-saves locally; kill and reopen the app to resume.
+Portrait is preferred. First launch walks through a short tutorial (Generate → Merge → Sell/Order). Progress auto-saves locally.
 
 ## Test
 
 ```bash
 flutter test
+flutter analyze
 ```
-
-Core coverage: merge/move, sell/economy, generator collect + tick, versioned save/load resume.
 
 ## Project layout
 
 ```
 lib/
-  app/           # MaterialApp + theme
-  core/          # config + models (no Flutter UI)
+  app/                 # MaterialApp + theme
+  core/                # config + models
   features/
-    board/       # merge board widgets
-    economy/     # sell UI
-    game/        # logic, controller, main screen
-    generators/  # coffee generator UI
-    persistence/ # versioned SharedPreferences save
+    board/             # merge board
+    daily_challenges/  # daily UI
+    economy/           # sell UI
+    game/              # logic, controller, main screen
+    generators/        # coffee (+ pastry when unlocked)
+    missions/          # missions + achievements
+    orders/            # customer orders
+    persistence/       # versioned SharedPreferences save (schema v2)
+    progression/       # XP / orders / daily / tutorial helpers
+    settings/          # sound/haptics toggles
+    shop/              # ≥10 shop levels
+    tutorial/          # first-minute overlay
+docs/
+  daily-challenges-offline.md   # clock safeguards + limitations
 ```
 
-Game rules live in `features/game/game_logic.dart` and are unit-tested without the widget tree. Balancing is centralized under `core/config/`.
-
-## Phase status
-
-| Phase | Scope | Status |
-|-------|--------|--------|
-| 1 | Board, merge, generator, coins, sell, save | This branch |
-| 2 | Orders, shop, XP, missions, daily, tutorial | Deferred |
-| 3 | AdMob, consent, analytics | Deferred |
-| 4 | Release polish, privacy docs, store assets | Deferred |
-
-No production AdMob IDs are embedded. No backend.
+No production AdMob IDs. No backend.
 
 ## License
 

@@ -35,6 +35,7 @@ class ChainConfig {
   }
 
   static const String coffeeChainId = 'coffee';
+  static const String pastryChainId = 'pastry';
 
   static final ChainConfig coffee = ChainConfig(
     id: coffeeChainId,
@@ -103,12 +104,84 @@ class ChainConfig {
     ],
   );
 
+  /// Pastry chain unlocked via shop progression (Phase 2).
+  static final ChainConfig pastry = ChainConfig(
+    id: pastryChainId,
+    displayName: 'Pastry',
+    levels: const [
+      ObjectLevelDef(
+        level: 1,
+        id: 'flour',
+        displayName: 'Flour',
+        shortLabel: 'Flr',
+      ),
+      ObjectLevelDef(
+        level: 2,
+        id: 'dough',
+        displayName: 'Dough',
+        shortLabel: 'Dgh',
+      ),
+      ObjectLevelDef(
+        level: 3,
+        id: 'croissant',
+        displayName: 'Croissant',
+        shortLabel: 'Cro',
+      ),
+      ObjectLevelDef(
+        level: 4,
+        id: 'muffin',
+        displayName: 'Muffin',
+        shortLabel: 'Muf',
+      ),
+      ObjectLevelDef(
+        level: 5,
+        id: 'scone',
+        displayName: 'Scone',
+        shortLabel: 'Sco',
+      ),
+      ObjectLevelDef(
+        level: 6,
+        id: 'danish',
+        displayName: 'Danish',
+        shortLabel: 'Dan',
+      ),
+      ObjectLevelDef(
+        level: 7,
+        id: 'tart',
+        displayName: 'Fruit Tart',
+        shortLabel: 'Trt',
+      ),
+      ObjectLevelDef(
+        level: 8,
+        id: 'cake_slice',
+        displayName: 'Cake Slice',
+        shortLabel: 'Cak',
+      ),
+      ObjectLevelDef(
+        level: 9,
+        id: 'layer_cake',
+        displayName: 'Layer Cake',
+        shortLabel: 'Lay',
+      ),
+      ObjectLevelDef(
+        level: 10,
+        id: 'showcase',
+        displayName: 'Pastry Showcase',
+        shortLabel: 'Shw',
+      ),
+    ],
+  );
+
   static ChainConfig byId(String id) {
     switch (id) {
       case coffeeChainId:
         return coffee;
+      case pastryChainId:
+        return pastry;
       default:
         throw ArgumentError.value(id, 'id', 'unknown chain');
     }
   }
+
+  static List<ChainConfig> get all => [coffee, pastry];
 }

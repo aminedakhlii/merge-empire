@@ -58,10 +58,9 @@ class GameController extends Notifier<GameControllerState> {
 
   @override
   GameControllerState build() {
-    _logic = _logicOverride ?? GameLogic(config: GameConfig.phase1);
+    _logic = _logicOverride ?? GameLogic(config: GameConfig.standard);
     _save = _saveOverride ?? SharedPreferencesSaveService();
 
-    // Placeholder until load completes.
     final initial = _logic.createInitialState();
     Future.microtask(_bootstrap);
 
@@ -74,14 +73,21 @@ class GameController extends Notifier<GameControllerState> {
 
   Future<void> _bootstrap() async {
     final loaded = await _save.load();
-    final game = loaded ?? _logic.createInitialState();
+    var game = loaded ?? _logic.createInitialState();
+    // Ensure Phase 1 saves migrated to v2 get seed missions/orders if empty.
+    if (game.missions.isEmpty || game.achievements.isEmpty) {
+      final fresh = _logic.createInitialState(nowMs: game.updatedAtMs);
+      game = game.copyWith(
+        missions: game.missions.isEmpty ? fresh.missions : game.missions,
+        achievements:
+            game.achievements.isEmpty ? fresh.achievements : game.achievements,
+        orders: game.orders.isEmpty ? fresh.orders : game.orders,
+        daily: game.daily.dayKey.isEmpty ? fresh.daily : game.daily,
+      );
+    }
     final ticked = _logic.tickGenerators(game);
     state = GameControllerState(game: ticked, isReady: true);
-    if (loaded == null) {
-      await _persist();
-    } else if (ticked != game) {
-      await _persist();
-    }
+    await _persist();
     _startTicker();
   }
 
@@ -89,10 +95,9 @@ class GameController extends Notifier<GameControllerState> {
     _tickTimer?.cancel();
     _tickTimer = Timer.periodic(tickInterval, (_) {
       final next = _logic.tickGenerators(state.game);
-      if (next.generators != state.game.generators) {
+      if (next.generators != state.game.generators ||
+          next.daily.dayKey != state.game.daily.dayKey) {
         state = state.copyWith(game: next);
-        // Persist storage changes periodically via collect/merge/sell primarily;
-        // also save when capacity fills.
         unawaited(_persist());
       } else {
         state = state.copyWith(game: next);
@@ -108,10 +113,10 @@ class GameController extends Notifier<GameControllerState> {
   Future<void> _apply(ActionResult result) async {
     switch (result) {
       case ActionSuccess(:final state, :final message):
-        this.state = this.state.copyWith(
+        this.state = GameControllerState(
           game: state,
           statusMessage: message,
-          clearSelected: true,
+          isReady: true,
         );
         await _persist();
       case ActionFailure(:final reason):
@@ -132,8 +137,12 @@ class GameController extends Notifier<GameControllerState> {
     state = state.copyWith(selected: pos, clearStatus: true);
   }
 
-  Future<void> collectFromGenerator() async {
-    await _apply(_logic.collectFromGenerator(state.game));
+  Future<void> collectFromGenerator({
+    String generatorId = 'basic_coffee_generator',
+  }) async {
+    await _apply(
+      _logic.collectFromGenerator(state.game, generatorId: generatorId),
+    );
   }
 
   Future<void> moveOrMerge(BoardPosition from, BoardPosition to) async {
@@ -151,6 +160,44 @@ class GameController extends Notifier<GameControllerState> {
 
   Future<void> sellAt(BoardPosition pos) async {
     await _apply(_logic.sellObject(state.game, pos));
+  }
+
+  Future<void> completeOrder(String instanceId) async {
+    await _apply(_logic.completeOrder(state.game, instanceId));
+  }
+
+  Future<void> upgradeShop() async {
+    await _apply(_logic.upgradeShop(state.game));
+  }
+
+  Future<void> claimMission(String missionId) async {
+    await _apply(_logic.claimMission(state.game, missionId));
+  }
+
+  Future<void> claimAchievement(String achievementId) async {
+    await _apply(_logic.claimAchievement(state.game, achievementId));
+  }
+
+  Future<void> claimDaily() async {
+    await _apply(_logic.claimDaily(state.game));
+  }
+
+  Future<void> dismissTutorial() async {
+    await _apply(_logic.dismissTutorial(state.game));
+  }
+
+  Future<void> advanceTutorial() async {
+    await _apply(_logic.advanceTutorialManual(state.game));
+  }
+
+  Future<void> setSoundEnabled(bool enabled) async {
+    state = state.copyWith(game: state.game.copyWith(soundEnabled: enabled));
+    await _persist();
+  }
+
+  Future<void> setHapticsEnabled(bool enabled) async {
+    state = state.copyWith(game: state.game.copyWith(hapticsEnabled: enabled));
+    await _persist();
   }
 
   int? selectedSaleValue() {
